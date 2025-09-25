@@ -1,0 +1,71 @@
+﻿using AutoMapper;
+using Ecom.API.Helper;
+using Ecom.Core.DTOs;
+using Ecom.Core.Interfaces;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Ecom.API.Controllers
+{
+
+    public class ProductController : BaseController
+    {
+        public ProductController(IUnitOfWork work, IMapper mapper) : base(work, mapper)
+        {
+        }
+        [HttpGet("get-all")]
+        public async Task<IActionResult> Get()
+        {
+            try
+            {
+
+                var product = await _work.ProductRepository
+                    .GetAllAsync(x => x.Category, x => x.Photos);
+                var result = _mapper.Map<List<ProductDTO>>(product);
+                if (product == null) {
+
+                    return BadRequest(new ResponseAPI(400));
+
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpGet("get-by-id/{id}" )]
+        public async Task<IActionResult> GetById(int id )
+        {
+            try
+            {
+                var product = await _work.ProductRepository.GetById(id,
+                    x => x.Category, x => x.Photos);
+                var result = _mapper.Map<ProductDTO>(product);
+                if (product == null)
+                    return BadRequest(new ResponseAPI(400));
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+
+               return BadRequest(ex.Message) ;
+            }
+        }
+        [HttpPost("Add-Product")]
+        public async Task<IActionResult> add(AddPrroductDTO productDTO)
+        {
+            try
+            {
+                await _work.ProductRepository.AddAsync(productDTO);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(new ResponseAPI(400,ex.Message));
+            }
+        }
+
+    }
+}

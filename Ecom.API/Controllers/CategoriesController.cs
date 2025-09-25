@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Ecom.API.Helper;
 using Ecom.Core.DTOs;
 using Ecom.Core.Entities.Product;
 using Ecom.Core.Interfaces;
@@ -21,7 +22,7 @@ namespace Ecom.API.Controllers
             {
                 var category = await _work.CategoryRepository.GetAllAsync();
                 if (category == null)
-                    return BadRequest();
+                    return BadRequest(new ResponseAPI(400));
                 return Ok(category);
 
             }
@@ -38,7 +39,7 @@ namespace Ecom.API.Controllers
             {
                 var category = await _work.CategoryRepository.GetByIdAsync(id);
                 if (category == null)
-                    return BadRequest();
+                    return BadRequest(new ResponseAPI(400, $"Catrgory id {id} not found "));
                 return Ok(category);
             }
             catch (Exception ex)
@@ -51,10 +52,11 @@ namespace Ecom.API.Controllers
         {
             try
             {
-                var category =  _mapper.Map<Category>(categoryDTO); //Mapping
+                var category = _mapper.Map<Category>(categoryDTO); //Mapping
                 await _work.CategoryRepository.AddAsync(category);
-                return Ok(new { message = " Item has been added " });
+                return Ok(new ResponseAPI(200, " Item has been added "));
             }
+
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
@@ -68,7 +70,7 @@ namespace Ecom.API.Controllers
             {
                 var category = _mapper.Map<Category>(categoryDTO); //Mapping
                 await _work.CategoryRepository.UpdateAsync(category);
-                return Ok(new { message = " Item has been updated " });
+                return Ok(new ResponseAPI(200, " Item has been updated "));
 
             }
             catch (Exception ex)
@@ -83,7 +85,7 @@ namespace Ecom.API.Controllers
             try
             {
                 await _work.CategoryRepository.DeleteAsync(id);
-                return Ok(new { message = " Item has been deleted " });
+                return Ok(new ResponseAPI(200, " Item has been deleted "));
             }
             catch (Exception ex)
             {
