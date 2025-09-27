@@ -67,5 +67,38 @@ namespace Ecom.API.Controllers
             }
         }
 
+
+        [HttpPut("Update-Product")]
+        public async Task<IActionResult> Update(UpdateProductDTO updateProductDTO)
+        {
+            try
+            {
+                await _work.ProductRepository.UpdateAsync(updateProductDTO);
+                return Ok( new ResponseAPI(200));
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(new ResponseAPI(400, ex.Message));
+            }
+        }
+
+        [HttpDelete("Delete-Product/{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var product = await _work.ProductRepository.GetById(id, x => x.Photos, x => x.Category);
+                await _work.ProductRepository.DeleteAsync(product);  
+                return Ok(new ResponseAPI(200));
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(new ResponseAPI(400, ex.Message));
+            }
+
+        }
+
     }
 }

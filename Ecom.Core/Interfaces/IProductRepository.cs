@@ -11,5 +11,7 @@ namespace Ecom.Core.Interfaces
     public interface IProductRepository : IGenericRepository<Product>
     {
         Task<bool> AddAsync(AddPrroductDTO productDTO);
+        Task<bool> UpdateAsync(UpdateProductDTO updateProductDTO);
+        Task<bool> DeleteAsync(Product product);
     }
 }

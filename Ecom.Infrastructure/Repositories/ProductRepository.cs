@@ -4,11 +4,7 @@ using Ecom.Core.Entities.Product;
 using Ecom.Core.Interfaces;
 using Ecom.Core.Services;
 using Ecom.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Ecom.Infrastructure.Repositories
 {
@@ -45,5 +41,57 @@ namespace Ecom.Infrastructure.Repositories
 
 
         }
+
+     
+
+        public async Task<bool> UpdateAsync(UpdateProductDTO updateProductDTO)
+        {
+
+            if (updateProductDTO == null) return false;
+
+            var findProduct = await context.Products
+                .Include(m => m.Category)
+                .Include(m => m.Photos)
+                .FirstOrDefaultAsync(m => m.Id == updateProductDTO.Id);
+
+            if (findProduct == null) return false;
+            mapper.Map(updateProductDTO, findProduct);
+
+            var FindPhoto= await context.Photos.Where(m=>m.ProductId == updateProductDTO.Id).ToListAsync();
+                foreach (var photo in FindPhoto)
+                {   
+                    imageManagementService.DeleteImageAsync(photo.ImageName);
+                }
+                context.Photos.RemoveRange(FindPhoto);
+            
+            if (updateProductDTO.Photo != null && updateProductDTO.Photo.Any())
+            {
+                var imagePaths = await imageManagementService.AddImagesAsync(updateProductDTO.Photo, updateProductDTO.Name);
+                var Photo = imagePaths.Select(path => new Photo
+                {
+                    ImageName = path,
+                    ProductId = findProduct.Id
+                }).ToList();
+                await context.Photos.AddRangeAsync(Photo);
+            }
+
+            await context.SaveChangesAsync();
+
+            return true;
+        }
+        public async Task<bool> DeleteAsync(Product product)
+        {
+            var photos = await context.Photos.Where(m => m.ProductId == product.Id).ToListAsync();
+            foreach (var item in photos)
+            {
+                imageManagementService.DeleteImageAsync(item.ImageName);
+
+            }
+            context.Products.RemoveRange(product);
+            await context.SaveChangesAsync();
+            return true;
+
+        }
+
     }
 }
