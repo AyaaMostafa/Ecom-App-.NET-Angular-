@@ -2,7 +2,7 @@
 {
     public class ResponseAPI
     {
-        public ResponseAPI(int statusCode, string? message="null")
+        public ResponseAPI(int statusCode, string? message=null)
         {
             StatusCode = statusCode;
             Message = message?? GetMessageFromStatusCode(statusCode);
@@ -14,6 +14,7 @@
                 200 => "Done",
                 400 => "Bad Request",
                 401 => "Un Authorized",
+                404 => "Not Found resources",
                 500 => "Server Error",
                 _ => "null"
             };  
