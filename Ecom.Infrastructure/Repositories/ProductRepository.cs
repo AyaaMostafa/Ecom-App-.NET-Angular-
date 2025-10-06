@@ -3,8 +3,10 @@ using Ecom.Core.DTOs;
 using Ecom.Core.Entities.Product;
 using Ecom.Core.Interfaces;
 using Ecom.Core.Services;
+using Ecom.Core.Sharing;
 using Ecom.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace Ecom.Infrastructure.Repositories
 {
@@ -19,6 +21,43 @@ namespace Ecom.Infrastructure.Repositories
             this.context = context;
             this.mapper = mapper;
             this.imageManagementService = imageManagementService;
+        }
+
+         public async Task<IEnumerable<ProductDTO>> GetAllAsync(ProductParams productParams) {
+            var query = context.Products.Include(m => m.Category)
+                .Include(m => m.Photos)
+                .AsNoTracking();
+
+            //filtering by word
+            if (!string.IsNullOrEmpty(productParams.Search))
+            {
+                var searchWords=productParams.Search.Split(' ').ToList();
+                query = query.Where(m => searchWords.All(word =>
+                m.Name.ToLower().Contains(word.ToLower())
+                ||
+                m.Description.ToLower().Contains(word.ToLower())
+                ));   
+            }
+            //filtering by category Id
+            if(productParams.CategoryId.HasValue )
+            {
+                query = query.Where(m => m.CategoryId == productParams.CategoryId);
+            }
+
+            if (!string.IsNullOrEmpty(productParams.Sort)) {
+                //convert switch to expression
+                query = productParams.Sort switch
+                {
+                    "priceAsc" => query.OrderBy(m => m.NewPrice),
+                    "priceDesc" => query.OrderByDescending(m => m.NewPrice),
+                    _ => query.OrderBy(m => m.Name),
+                };
+            }
+            //pagination always be after the last mathod
+          
+            query = query.Skip((productParams.PageNumber - 1) * productParams.PageSize).Take(productParams.PageSize);
+            var result = mapper.Map<List<ProductDTO>>( query);
+            return result;  
         }
 
         public async Task<bool> AddAsync(AddPrroductDTO productDTO)
@@ -79,7 +118,7 @@ namespace Ecom.Infrastructure.Repositories
 
             return true;
         }
-        public async Task<bool> DeleteAsync(Product product)
+        public async Task DeleteAsync(Product product)
         {
             var photos = await context.Photos.Where(m => m.ProductId == product.Id).ToListAsync();
             foreach (var item in photos)
@@ -89,9 +128,10 @@ namespace Ecom.Infrastructure.Repositories
             }
             context.Products.RemoveRange(product);
             await context.SaveChangesAsync();
-            return true;
+           
 
         }
+
 
     }
 }

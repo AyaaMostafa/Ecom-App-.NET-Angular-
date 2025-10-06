@@ -1,5 +1,6 @@
 using Ecom.API.Middleware;
 using Ecom.Infrastructure;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
 
@@ -11,6 +12,12 @@ namespace Ecom.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddCors(
+                op => op.AddPolicy("CORSPolicy", builder =>
+                {
+                    builder.AllowAnyHeader().AllowAnyMethod().AllowCredentials().WithOrigins("https://localhost:4200");
+                })
+                );
             // Add services to the container.
             builder.Services.AddMemoryCache();
             builder.Services.AddControllers();
@@ -30,6 +37,7 @@ namespace Ecom.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            app.UseCors("CORSPolicy");    
             app.UseMiddleware<ExceptionMiddleware>();
             app.UseStatusCodePagesWithReExecute("/errors/{0}");
 
